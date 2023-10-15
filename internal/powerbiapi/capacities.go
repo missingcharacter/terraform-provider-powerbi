@@ -15,7 +15,7 @@ type GetCapacitiesResponse struct {
 	Value []GetCapacitiesResponseItem
 }
 
-//GetCapacitiesResponseItem represents the response object of each capacity of get capacities response API.
+// GetCapacitiesResponseItem represents the response object of each capacity of get capacities response API.
 type GetCapacitiesResponseItem struct {
 	ID                      string
 	DisplayName             string
@@ -26,7 +26,7 @@ type GetCapacitiesResponseItem struct {
 	CapacityUserAccessRight string
 }
 
-//CapacityAdmins represents the list of capacity admins.
+// CapacityAdmins represents the list of capacity admins.
 type CapacityAdmins string
 
 // GroupAssignToCapacity assigns capcity to a workspace
