@@ -19,18 +19,26 @@ type Client struct {
 	*http.Client
 }
 
-//NewClientWithPasswordAuth creates a Power BI REST API client using password authentication with delegated permissions
+// NewClientWithPasswordAuth creates a Power BI REST API client using password authentication with delegated permissions
 func NewClientWithPasswordAuth(tenant string, clientID string, clientSecret string, username string, password string) (*Client, error) {
 	return newClient(func(httpClient *http.Client) (string, error) {
 		return getAuthTokenWithPassword(httpClient, tenant, clientID, clientSecret, username, password)
 	})
 }
 
-//NewClientWithClientCredentialAuth creates a Power BI REST API client using client credentials with application permissions
+// NewClientWithClientCredentialAuth creates a Power BI REST API client using client credentials with application permissions
 func NewClientWithClientCredentialAuth(tenant string, clientID string, clientSecret string) (*Client, error) {
 
 	return newClient(func(httpClient *http.Client) (string, error) {
 		return getAuthTokenWithClientCredentials(httpClient, tenant, clientID, clientSecret)
+	})
+}
+
+// NewClientWithClientCredentialAuth creates a Power BI REST API client using client credentials with application permissions
+func NewClientWithManagedIdentityAuth(clientID string) (*Client, error) {
+
+	return newClient(func(httpClient *http.Client) (string, error) {
+		return getAuthTokenWithManagedIdentity(httpClient, clientID)
 	})
 }
 

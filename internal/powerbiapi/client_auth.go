@@ -133,3 +133,44 @@ func getAuthTokenWithClientCredentials(
 	err = json.Unmarshal(data, &dataObj)
 	return dataObj.AccessToken, err
 }
+
+func getAuthTokenWithManagedIdentity(
+	httpClient *http.Client,
+	clientID string,
+) (string, error) {
+
+	authURL, err := url.Parse("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2021-02-01")
+	if err != nil {
+		return "", err
+	}
+	queryParams := authURL.Query()
+	queryParams.Add("resource", "https://analysis.windows.net/powerbi/api/.default")
+	if clientID != "" {
+		queryParams.Add("client_id", clientID)
+	}
+	authURL.RawQuery = queryParams.Encode()
+	httpRequest, err := http.NewRequest("GET", authURL.String(), nil)
+	if err != nil {
+		return "", err
+	}
+	httpRequest.Header.Set("Metadata", "true")
+	resp, err := httpClient.Do(httpRequest)
+
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != 200 {
+		data, _ := ioutil.ReadAll(resp.Body)
+		return "", fmt.Errorf("status: %d, body: %s", resp.StatusCode, data)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var dataObj tokenResponse
+	err = json.Unmarshal(data, &dataObj)
+	return dataObj.AccessToken, err
+}

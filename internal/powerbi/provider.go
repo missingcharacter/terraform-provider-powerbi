@@ -13,20 +13,27 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("POWERBI_TENANT_ID", ""),
-				Description: "The Tenant ID for the tenant which contains the Azure Active Directory App Registration to use for performing Power BI REST API operations. This can also be sourced from the `POWERBI_TENANT_ID` Environment Variable",
+				Description: "The Tenant ID for the tenant which contains the Azure Active Directory App Registration to use for performing Power BI REST API operations, not needed for Managed Identities (System-assigned nor User-assigned). This can also be sourced from the `POWERBI_TENANT_ID` Environment Variable",
 			},
 			"client_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("POWERBI_CLIENT_ID", ""),
-				Description: "Also called Application ID. The Client ID for the Azure Active Directory App Registration to use for performing Power BI REST API operations. This can also be sourced from the `POWERBI_CLIENT_ID` Environment Variable",
+				Description: "Also called Application ID. The Client ID for the Azure Active Directory App Registration or User-assigned managed identity to use for performing Power BI REST API operations. This can also be sourced from the `POWERBI_CLIENT_ID` Environment Variable",
 			},
 			"client_secret": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("POWERBI_CLIENT_SECRET", ""),
-				Description: "Also called Application Secret. The Client Secret for the Azure Active Directory App Registration to use for performing Power BI REST API operations. This can also be sourced from the `POWERBI_CLIENT_SECRET` Environment Variable",
+				Description: "Also called Application Secret. The Client Secret for the Azure Active Directory App Registration to use for performing Power BI REST API operations, not needed for Managed Identities (System-assigned nor User-assigned). This can also be sourced from the `POWERBI_CLIENT_SECRET` Environment Variable",
+			},
+			// Managed Identity specific fields
+			"use_msi": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ARM_USE_MSI", false),
+				Description: "Allow Managed Identity to be used for Authentication",
 			},
 			"username": {
 				Type:        schema.TypeString,
@@ -63,6 +70,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 	username, usernameOk := d.GetOk("username")
 	password, passwordOk := d.GetOk("password")
+	useMsi, useMsiOk := d.GetOk("use_msi")
 
 	if usernameOk && passwordOk {
 		return powerbiapi.NewClientWithPasswordAuth(
@@ -71,6 +79,11 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 			d.Get("client_secret").(string),
 			username.(string),
 			password.(string),
+		)
+	}
+	if useMsi.(bool) && useMsiOk {
+		return powerbiapi.NewClientWithManagedIdentityAuth(
+			d.Get("client_id").(string),
 		)
 	}
 	return powerbiapi.NewClientWithClientCredentialAuth(

@@ -2,6 +2,42 @@
 
 The Power BI terraform provider support authenticating either by a service principal or by using user credentials. Each method requires an initial setup.
 
+## Power BI Managed Identity
+
+The Power BI terraform provider can use a managed identity (System-assigned or User-assigned) to create and manage resources. This can reduce the overhead of managing Power BI users or service principals and their associated credentials (password, client secret).
+
+### Creating the managed identity
+
+1. Create User Assigned Managed Identity.
+   * Get the `client_id` from your [Azure portal](https://portal.azure.com/) -> Managed identities
+2. Create an Azure Active Directory security group.
+   * Assign your Azure Active Directory App service principal to the security group
+3. Enable the Power BI service admin settings.
+   * In the Power BI Admin Portal under Tenant Settings enable "Allow service principals to use Power BI API"
+   * Specify the security group created in step 2 to restrict access to the Managed identity
+
+
+### Configure the provider
+
+Set the Power BI terraform provider arguments `client_id` and `use_msi` to be the values retrieved from your [Azure Portal](https://portal.azure.com/) -> Managed identities. Managed identity authentication does *not* require a `client_secret`, `username` or `password`.
+
+#### User-Assigned identity
+
+```hcl
+provider "powerbi" {
+  use_msi   = true
+  client_id = <client id from azure portal>
+}
+```
+
+#### System-Assigned identity
+
+```hcl
+provider "powerbi" {
+  use_msi   = true
+}
+```
+
 ## Power BI Service Principal
 
 The Power BI terraform provider can use a service principal to create and manage resources. This can reduce the overhead of managing Power BI users and their associated credentials.
@@ -14,7 +50,7 @@ The Power BI terraform provider can use a service principal to create and manage
 2. Create an Azure Active Directory security group.
    * Assign your Azure Active Directory App service principal to the security group
 3. Enable the Power BI service admin settings.
-   * In the Power BI Admin Portal under Tenant Settings enable "Allow service principals to use Power BI API
+   * In the Power BI Admin Portal under Tenant Settings enable "Allow service principals to use Power BI API"
    * Specify the security group created in step 2 to restrict access to the Azure Active Directory App
 
 Detailed instructions, including screenshots, can be found at https://docs.microsoft.com/en-us/power-bi/developer/embedded/embed-service-principal
